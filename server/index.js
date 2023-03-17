@@ -24,7 +24,13 @@ io.on('connection', (socket) => {
 
     socket.on('clickButton', (data) => {
         console.log(data)
-        socket.broadcast.emit('recieveMessage', data)
+        socket.to(Number(data.room)).emit('receiveMessage', data.message)
+        // socket.broadcast.emit('receiveMessage',data.message)
+    })
+
+    socket.on('join_room', (data) => {
+        socket.join(Number(data))
+        console.log(`user joined ${data}`)
     })
 })
 
