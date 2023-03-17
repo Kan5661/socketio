@@ -1,7 +1,6 @@
 import './App.css'
 import io from 'socket.io-client'
 import { useState, useEffect, useRef } from 'react'
-import {fabric} from 'fabric'
 
 
 const socket = io.connect('http://localhost:3001')
@@ -10,47 +9,16 @@ function App() {
 
   const [message, setMessage] = useState('')
   const [recievedMessage, setRecievedMessage] = useState('')
-  const [isFreeDraw, setIsFreeDraw] = useState(true)
-  const [room, setRoom] = useState('')
-  
-  const canvasRef = useRef(null)
-
-  useEffect(() => {
-    const canvas = new fabric.Canvas(canvasRef.current, {
-      backgroundColor: 'white',
-      height: 1000,
-      width: 900,
-      borderColor: 'black',
-      borderWidth: 2,
-      isDrawingMode: isFreeDraw
-    })
-
-    const rect = new fabric.Rect({
-      left: 100,
-      top: 100,
-      width: 210,
-      height: 110,
-      fill: 'green'
-    })
-
-    const circle = new fabric.Circle({
-      radius: 50, 
-      fill: 'blue',
-      left: 0, right: 0
-    })
-
-    circle.set({'left': 100, 'top': 200, 'strokeWidth': 2, 'stroke': 'red'})
-    
-    canvas.add(rect, circle)
-
-    return () => {
-      canvas.dispose()
-    }
-
-  }, [isFreeDraw])
+  const [room, setRoom] = useState(0)
+  const [user, setUser] = useState('cool chatter')
+  socket.emit('join_room', room)
 
   function SendMessage() {
+    let chat = document.getElementById('chatmessages')
     socket.emit('clickButton', {message, room})
+    let newMessage = document.createElement('h4')
+    newMessage.innerHTML = `${user}: ${message}`
+    chat.appendChild(newMessage)
   }
 
   const joinRoom = () => {
@@ -58,15 +26,23 @@ function App() {
   }
   useEffect(() => {
     socket.on('receiveMessage', (data) => {
+      let chat = document.getElementById('chatmessages')
       setRecievedMessage(data)
-      console.log('render')
+      let newMessage = document.createElement('h4')
+      newMessage.innerHTML = `${user}: ${data}`
+      chat.appendChild(newMessage)
     })
-  }, [socket, canvasRef])
+  }, [socket])
 
   return (
     <div className="App">
+      <div className='chatterName'>
+        <input placeholder='name' onChange={(event) => {
+          setUser(event.target.value)
+        }}></input>
+        <button>Set name</button>
+      </div>
 
-      <h1>Message: {recievedMessage}</h1>
       <div className='message'>
         <input placeholder='message' onChange={(event) => {
           setMessage(event.target.value)
@@ -80,14 +56,15 @@ function App() {
           setRoom(event.target.value)
           console.log(room)
         }}></input>
-        <button onClick={joinRoom}>create room</button>
+        <button onClick={joinRoom}>Join room</button>
       </div>
 
-      <button onClick={() => {
-        setIsFreeDraw(isFreeDraw? false : true)
-        console.log(isFreeDraw)
-        }}>pencil</button>
-      <canvas ref={canvasRef} id='canvas'></canvas>
+      <h1 className='Chat'>Room {room}
+        <div className='userMessage' id='chatmessages'>
+
+        </div>
+      </h1>
+
     </div>
   );
 }
